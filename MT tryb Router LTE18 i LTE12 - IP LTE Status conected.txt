@@ -1,0 +1,48 @@
+
+/system scheduler
+add interval=5m name=check-ip on-event="/system script run check-ip" policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon
+/system script
+add dont-require-permissions=no name=check-ip owner=admin policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local result [/interface lt\
+    e monitor lte1 once as-value];\
+    \n:local status (\$result->\"status\");\
+    \n\
+    \n:if (\$status != \"connected\") do={\
+    \n    :log warning \"Status rejestracji modemu LTE to \$status. Restartowanie modemu...\"\
+    \n    /interface disable lte1\
+    \n    :delay 5\
+    \n    /interface enable lte1\
+    \n} else={\
+    \n    :log info \"Modem LTE jest zarejestrowany. Sprawdzanie interfejsu IP LTE1...\"\
+    \n    \
+    \n    :local lte1Present false;\
+    \n    :foreach i in=[/ip address find] do={\
+    \n        :if ([/ip address get \$i interface] = \"lte1\") do={\
+    \n            :set lte1Present true;\
+    \n        }\
+    \n    }\
+    \n    \
+    \n    :if (!\$lte1Present) do={\
+    \n        :log warning \"Interfejs IP LTE1 nie zosta\B3 znaleziony. Restartowanie modemu...\"\
+    \n        /interface disable lte1\
+    \n        :delay 5\
+    \n        /interface enable lte1\
+    \n        :delay 60\
+    \n\
+    \n        :set lte1Present false;\
+    \n        :foreach i in=[/ip address find] do={\
+    \n            :if ([/ip address get \$i interface] = \"lte1\") do={\
+    \n                :set lte1Present true;\
+    \n            }\
+    \n        }\
+    \n\
+    \n        :if (!\$lte1Present) do={\
+    \n            :log error \"Interfejs IP LTE1 nadal nie znaleziony. Restart routera...\"\
+    \n            /system reboot;\
+    \n        } else={\
+    \n            :log info \"Interfejs IP LTE1 znaleziony po restarcie modemu.\";\
+    \n        }\
+    \n    } else={\
+    \n        :log info \"Interfejs IP LTE1 jest obecny. Dzia\B3anie nie jest wymagane.\";\
+    \n    }\
+    \n}\
+    \n"
