@@ -1,0 +1,12 @@
+/system scheduler
+set disabled=yes check-ip
+/system script
+set dont-require-permissions=yes check-ip
+/tool netwatch add host=8.8.8.8 interval=5m timeout=5s \
+    down-script="/system script run check-ip"
+
+
+
+
+
+
